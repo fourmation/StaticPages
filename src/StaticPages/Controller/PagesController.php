@@ -7,7 +7,7 @@
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
-namespace zf2StaticPages\Controller;
+namespace StaticPages\Controller;
 
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\Mvc\Controller\Action;
@@ -24,14 +24,17 @@ class PagesController extends AbstractActionController
     public function notFoundAction()
     {
         // Check if a template exists for the current requested action
-        if ( $this->getTemplate() === FALSE ) {
-
+        $template = $this->getTemplate() ;
+        if (false === $template) {
             // If not, return a 404
-            $this->getResponse()->setStatusCode( 404 );
+            $this->getResponse()->setStatusCode(404);
         }
 
         // Return the requested template
-        return new ViewModel( array( 'static' => TRUE, ) );
+        $viewModel = new ViewModel(array('static' => true,));
+        $viewModel->setTemplate($template);
+
+        return $viewModel;
     }
 
     /**
@@ -41,18 +44,21 @@ class PagesController extends AbstractActionController
      */
     protected function getTemplate()
     {
-
-        // get requested controller and action
-        $controllerName = strtolower( $this->params( 'controller' ) );
-        $actionName = $this->params( 'action' );
+        $controllerName = strtolower($this->params('controller'));
+        $exp = explode('/', $this->getRequest()->getRequestUri());
 
         // Get the template path stack from the service manager
-        $resolver = $this->getEvent()->getApplication()->getServiceManager()->get( 'Zend\View\Resolver\TemplatePathStack' );
+        $resolver = $this->getEvent()
+            ->getApplication()
+            ->getServiceManager()
+            ->get('Zend\View\Resolver\TemplatePathStack');
 
-        if ( FALSE === $resolver->resolve( '/zf2-static-pages/pages/'.$actionName) ) {
-            return FALSE;
+        $template = implode(DIRECTORY_SEPARATOR, $exp) ;
+
+        if (false === $resolver->resolve('static-pages' . DIRECTORY_SEPARATOR . 'pages' . $template)) {
+            return false;
         }
 
-        return TRUE;
+        return $template;
     }
 }
